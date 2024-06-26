@@ -39,6 +39,7 @@ def devParcialW(b, d, i, w):
     t_0 = np.tanh((b + (w).dot(i)))
     t_1 = (((1 + t_0) / 2) - d)
     gradient = (((1 - (t_0 ** 2)) * t_1) * i)
+    print(type(gradient))
 
     return gradient
 

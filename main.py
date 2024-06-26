@@ -1,18 +1,16 @@
 from funciones import *
 
-normal = abrirImagenesEscaladas('./chest_xray/train/NORMAL', 64)
-print('ejecuté normal')
-pneumonia = abrirImagenesEscaladas('./chest_xray/train/PNEUMONIA', 64)
-print('ejecuté pneumonía')
+loss_train = error_cuadratico('train')
+loss_test = error_cuadratico('test')
 
-imagenes_entrenamiento_balanceadas, d = balancear_datos(normal, pneumonia)
+import matplotlib.pyplot as plt
 
-diagnost = descenso_por_gradiente(imagenes_entrenamiento_balanceadas, d)
+plt.plot(loss_train, label='Train Loss')
+plt.plot(loss_test, label='Test Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
 
-print (diagnost)
-
-
-
-
-
-
+# print(f'loss train {loss_train}')
+# print(f'loss test {loss_test}')
