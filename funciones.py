@@ -10,8 +10,7 @@ def abrirImagenesEscaladas(carpeta, escala=64):
    # abre todas las imagenes de la carpeta, y las escala de tal forma que midan (escala x escala)px
    # devuelve las imagenes aplanadas -> vectores de tamano escala^2 con valores entre 0 y 1
    imagenes = []
-   for dirpath, dirnames, filenames in os.walk(carpeta):
-      
+   for dirpath, dirnames, filenames in os.walk(carpeta):  
       for file in filenames:
          img = Image.open( os.path.join(carpeta, file) )
          img = img.resize((escala, escala))
@@ -60,11 +59,11 @@ def dfw(w,b, i:list[list], d:list):
    idx = 0
    sum = 0
    for imagen in i:
-      # t_0:float = math.tanh(b+w@imagen) 
-      # sum += (1-t_0**2)*(((t_0+1)/2-d[idx]))*imagen
-      t_0 = np.tanh((b + (w).dot(imagen)))
-      t_1 = (((1 + t_0) / 2) - d[idx])
-      sum += (((1 - (t_0 ** 2)) * t_1) * imagen)
+      t_0:float = math.tanh(b+w@imagen) 
+      sum += (1-t_0**2)*(((t_0+1)/2-d[idx]))*imagen
+      # t_0 = np.tanh((b + (w).dot(imagen)))
+      # t_1 = (((1 + t_0) / 2) - d[idx])
+      # sum += (((1 - (t_0 ** 2)) * t_1) * imagen)
       idx += 1 
    return sum
 
@@ -96,13 +95,13 @@ def descenso_por_gradiente(i, d):
    w_0 = np.random.randn(K) # w es un vector de R^K tq K=cant de píxeles en una imagen
    b_0 = 0.0
    x_t = (w_0, b_0)
-   alpha = 0.0001
+   alpha =  0.001
    TOLERANCIA = 0.0001
    MAX_ITER = 1000
+   loss = [] 
    iter = 0
    while iter < MAX_ITER: # necesitamos esto porque no tenemos x_tsig al pcpio
       x_tsig = [x_t[0] - (alpha * gradiente(x_t, i, d)[0]), x_t[1] - (alpha * gradiente(x_t, i, d)[1])]
-      loss = [] 
       loss.append(f(x_tsig, i, d))
       if abs(f(x_tsig, i, d) - f(x_t, i, d)) < TOLERANCIA:
          break 
@@ -124,3 +123,15 @@ def error_cuadratico(conjunto:str):
    error = f(opt, img, d)
    
    return loss
+
+def normalizar_vector(vector):
+   # Calcular la magnitud del vector
+   magnitud = math.sqrt(sum(comp**2 for comp in vector))
+   
+   # Normalizar cada componente del vector
+   vector_normalizado = [comp / magnitud for comp in vector]
+   
+   return vector_normalizado
+
+def matriz_confusion():
+   return
