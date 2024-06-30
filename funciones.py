@@ -37,12 +37,8 @@ def balancear_datos(normal, pneumonia):
 
 #!###########################################################################################################
 
-# def f(w:list, b:int, i:list[list]): # funcion normal. f 
-#    return (math.tanh(w@i + b) + 1)/2
-
-
 # lagrangiano
-def f(x_t, i, d):
+def L(x_t, i, d):
    # funcion a minimizar
    w = x_t[0]
    b = x_t[1]
@@ -54,20 +50,17 @@ def f(x_t, i, d):
       idx += 1
    return sum
 
-def dfw(w,b, i:list[list], d:list):
+def dl_w(w,b, i:list[list], d:list):
    # derivada del lagrangiano contra w
    idx = 0
    sum = 0
    for imagen in i:
       t_0:float = math.tanh(b+w@imagen) 
       sum += (1-t_0**2)*(((t_0+1)/2-d[idx]))*imagen
-      # t_0 = np.tanh((b + (w).dot(imagen)))
-      # t_1 = (((1 + t_0) / 2) - d[idx])
-      # sum += (((1 - (t_0 ** 2)) * t_1) * imagen)
       idx += 1 
    return sum
 
-def dfb(w,b, i:list[list], d:list):
+def dl_b(w,b, i:list[list], d:list):
    # derivada del lagrangiano contra b
    sum = 0
    idx = 0
@@ -78,60 +71,83 @@ def dfb(w,b, i:list[list], d:list):
    return sum
 
 def gradiente(x_t,i:list[list],d:list):
-   # x es un punto de i_j (imagen aplanada = vector de tamaño escala*escala) (i: conjunto de imagenes)(i_j:imagen j del conjunto)
-   # gradiente tiene una tupla: derivada de f contra b, derivada de f contra w.
-   
+   # gradiente tiene una tupla: derivada del error contra b, derivada del error contra w.
    w = x_t[0]
    b = x_t[1]
-   res = [dfw(w,b,i,d), dfb(w,b,i,d)]
+   res = [dl_w(w,b,i,d), dl_b(w,b,i,d)]
    return res
 
-# x_0 es un punto aleatorio en Rn
-# x_0 va a tener un valor aleatorio de b y un valor aleatorio de w
-def descenso_por_gradiente(i, d):
+def descenso_por_gradiente(i, d, alpha=0.001, TOLERANCIA=0.0001, MAX_ITER=1500):
    # función a optimizar
+   np.random.seed(42)
    K = len(i[0])
-   # ? Multiplicar por 0.01 para reducir la escala de los valores (???)
-   w_0 = np.random.randn(K) # w es un vector de R^K tq K=cant de píxeles en una imagen
+   w_0 = np.random.randn(K) # w es un vector de R^K tq K=cant de píxeles en una imagen. Inicialmente es un vector aleatorio.
    b_0 = 0.0
    x_t = (w_0, b_0)
-   alpha =  0.001
-   TOLERANCIA = 0.0001
-   MAX_ITER = 1000
    loss = [] 
    iter = 0
-   while iter < MAX_ITER: # necesitamos esto porque no tenemos x_tsig al pcpio
+   while iter < MAX_ITER:
       x_tsig = [x_t[0] - (alpha * gradiente(x_t, i, d)[0]), x_t[1] - (alpha * gradiente(x_t, i, d)[1])]
-      loss.append(f(x_tsig, i, d))
-      if abs(f(x_tsig, i, d) - f(x_t, i, d)) < TOLERANCIA:
-         break 
+      loss.append(L(x_tsig, i, d))
+      # if abs(L(x_tsig, i, d) - L(x_t, i, d)) < TOLERANCIA and L(x_tsig, i, d)<=0.05:
+      #    break 
       x_t = x_tsig
       iter = iter + 1
    return x_tsig, loss
 
-def error_cuadratico(conjunto:str):
+def error_cuadratico(conjunto:str, escala):
    
    if conjunto != "test" and conjunto != "train":
       raise Exception ("'conjunto' tiene que ser 'test' o 'train'")
    
    path_normal = './chest_xray/' + conjunto + '/NORMAL'
    path_pneumonia = './chest_xray/' + conjunto + '/PNEUMONIA'
-   normal_test = abrirImagenesEscaladas(path_normal, 64)
-   pneumonia_test = abrirImagenesEscaladas(path_pneumonia, 64)
+   normal_test = abrirImagenesEscaladas(path_normal, escala)
+   pneumonia_test = abrirImagenesEscaladas(path_pneumonia, escala)
    img, d = balancear_datos(normal_test, pneumonia_test)
-   opt, loss = descenso_por_gradiente(img, d)
-   error = f(opt, img, d)
+   optimo, loss = descenso_por_gradiente(img, d)
    
-   return loss
+   return optimo, loss
 
 def normalizar_vector(vector):
-   # Calcular la magnitud del vector
-   magnitud = math.sqrt(sum(comp**2 for comp in vector))
-   
-   # Normalizar cada componente del vector
-   vector_normalizado = [comp / magnitud for comp in vector]
-   
+   m = 0
+   vector_normalizado = []
+   for elem in vector:
+      m += elem**2
+   for elem in vector:
+      vector_normalizado.append(elem/(math.sqrt(m)))
    return vector_normalizado
 
-def matriz_confusion():
-   return
+def diagnostico(imagen, w, b):
+   t_0: float = math.tanh(w @ imagen + b)
+   res = (t_0 + 1) / 2
+   if res >= 0.5:
+      return 1
+   else:
+      return 0
+
+def matriz_confusion(conjunto, escala, w ,b):
+   if conjunto != "test" and conjunto != "train":
+      raise Exception ("'conjunto' tiene que ser 'test' o 'train'")
+   path_normal = './chest_xray/' + conjunto + '/NORMAL'
+   path_pneumonia = './chest_xray/' + conjunto + '/PNEUMONIA'
+   normal_test = abrirImagenesEscaladas(path_normal, escala)
+   pneumonia_test = abrirImagenesEscaladas(path_pneumonia, escala)
+   
+   cant_enfermos = len(pneumonia_test)
+   cant_normales = len(normal_test)
+   imagenes_con = [] 
+   imagenes_sin = []
+   
+   for imagen in normal_test:
+      imagenes_sin.append(diagnostico(imagen,w,b))
+   for imagen in pneumonia_test:
+      imagenes_con.append(diagnostico(imagen,w,b))
+   
+   
+   true_negative=imagenes_sin.count(0)/cant_normales
+   false_negative=imagenes_con.count(0)/cant_enfermos
+   true_positive=imagenes_con.count(1)/cant_enfermos
+   false_positive=imagenes_sin.count(1)/cant_normales
+
+   return true_negative, false_negative, true_positive, false_positive
