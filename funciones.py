@@ -77,7 +77,7 @@ def gradiente(x_t,i:list[list],d:list):
    res = [dl_w(w,b,i,d), dl_b(w,b,i,d)]
    return res
 
-def descenso_por_gradiente(i, d, alpha=0.001, TOLERANCIA=0.0001, MAX_ITER=1000):
+def descenso_por_gradiente(i, d, alpha=0.001, MAX_ITER=1000):
    # función a optimizar
    np.random.seed(42)
    K = len(i[0])
