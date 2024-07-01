@@ -77,7 +77,7 @@ def gradiente(x_t,i:list[list],d:list):
    res = [dl_w(w,b,i,d), dl_b(w,b,i,d)]
    return res
 
-def descenso_por_gradiente(i, d, alpha=0.001, TOLERANCIA=0.0001, MAX_ITER=1500):
+def descenso_por_gradiente(i, d, alpha=0.001, TOLERANCIA=0.0001, MAX_ITER=1000):
    # función a optimizar
    np.random.seed(42)
    K = len(i[0])
@@ -133,9 +133,10 @@ def matriz_confusion(conjunto, escala, w ,b):
    path_pneumonia = './chest_xray/' + conjunto + '/PNEUMONIA'
    normal_test = abrirImagenesEscaladas(path_normal, escala)
    pneumonia_test = abrirImagenesEscaladas(path_pneumonia, escala)
-   
-   cant_enfermos = len(pneumonia_test)
-   cant_normales = len(normal_test)
+   n = min(len(normal_test), len(pneumonia_test))
+   pneumonia_test = pneumonia_test[:n]
+   normal_test = normal_test[:n]
+
    imagenes_con = [] 
    imagenes_sin = []
    
@@ -144,10 +145,12 @@ def matriz_confusion(conjunto, escala, w ,b):
    for imagen in pneumonia_test:
       imagenes_con.append(diagnostico(imagen,w,b))
    
+   matriz =[[0,0],[0,0]]   # [tiene_enferemedad][diagnostico] 
+                           # [0][0]=true positive, [0][1]=false positive, [1][0]=false negative, [1][1]=true negative
+                           
+   matriz[0][0]=imagenes_con.count(1)/n
+   matriz[0][1]=imagenes_sin.count(1)/n
+   matriz[1][0]=imagenes_con.count(0)/n
+   matriz[1][1]=imagenes_sin.count(0)/n
    
-   true_negative=imagenes_sin.count(0)/cant_normales
-   false_negative=imagenes_con.count(0)/cant_enfermos
-   true_positive=imagenes_con.count(1)/cant_enfermos
-   false_positive=imagenes_sin.count(1)/cant_normales
-
-   return true_negative, false_negative, true_positive, false_positive
+   return matriz
