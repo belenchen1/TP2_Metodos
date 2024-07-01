@@ -5,6 +5,7 @@ from PIL import Image
 import os
 import random
 import math
+import time
 
 def abrirImagenesEscaladas(carpeta, escala=64):
    # abre todas las imagenes de la carpeta, y las escala de tal forma que midan (escala x escala)px
